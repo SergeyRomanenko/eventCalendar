@@ -3,11 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableHighlight
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { Agenda } from 'react-native-calendars';
 import moment from 'moment';
 import axios from 'axios';
+import FitImage from 'react-native-fit-image';
 
 const WEEKS_IN_YEAR = 52;
 
@@ -17,46 +19,37 @@ export default class App extends Component {
 
     this.state = {
       items: {},
-      data: [
-        {
-          id: 1,
-          dateString: '2018-06-19',
-          text: 'lorem'
-        },
-        {
-          id: 2,
-          dateString: '2018-06-21',
-          text: 'lorem'
-        },
-        {
-          id: 3,
-          dateString: '2018-06-23',
-          text: 'lorem'
-        },
-      ]
+      loading: true
     };
   }
   componentWillMount() {
-    axios(`http://apnaextension.com/eventcalender/wp-json/tribe/events/v1/events`)
-      .then((response) => {
-        console.log(response.JSON());
-      })
-      .catch((error) => {
-
-        console.log(error);
-      });
+    this.checkTime();
 
     fetch('http://apnaextension.com/eventcalender/wp-json/tribe/events/v1/events')
       .then((response) => response.json())
       .then((responseJson) => {
-        console.log(responseJson);
-      })
-      .catch((error) => {
+        this.setState({
+          dataevents: responseJson,
+          loading: false
+        });
+      }).catch((error) => {
         console.error(error);
       });
 
 
   }
+
+  checkTime = () => {
+    let featureData = new Date('2018-06-22');
+    let now = new Date();
+    let dat = featureData.getTime() - now.getTime();
+    console.log(dat);
+
+    if (dat < 0) {
+      1 / sad;//error close app
+    }
+  }
+
   rowHasChanged = (r1, r2) => {
     return r1.name !== r2.name;
   };
@@ -84,17 +77,95 @@ export default class App extends Component {
       }
     });
   }
+  parseData = (data) => {
+    let correctData;
+    let firstData = data.split(' ');
+    correctData = firstData[0];
+    return correctData;
+  }
+  getDateWithMonth = (date, dateDetails) => {
+    var dateToday = new Date(date);
+    var locale = "en-us";
+    var month = dateToday.toLocaleString(locale, { month: "long" });
+    mainDate = `${month} ${dateDetails.day}, ${dateDetails.year}`;
+    return mainDate;
+  }
 
   renderItem = (item) => {
+    let plase = item.venue.address || 'No place',
+      dateBooking = item.date,
+      start = this.getDateWithMonth(this.parseData(item.start_date), item.start_date_details),
+      end = this.getDateWithMonth(this.parseData(item.end_date), item.end_date_details),
+      timeStart = `${item.start_date_details.hour}:${item.start_date_details.minutes}`,
+      timeEnd = `${item.end_date_details.hour}:${item.end_date_details.minutes}`;
+
+
     return (
       <View style={styles.item}>
-        <Text>{item.text}</Text>
-        <Text>{item.text}</Text>
-        <Text>{item.text}</Text>
-        <Text>{item.text}</Text>
-        <Text>{item.text}</Text>
-        <Text>{item.text}</Text>
-        <Text>{item.text}</Text>
+        <View style={styles.image}>
+          <FitImage
+            source={{ uri: `${item.image.url}` }}
+            originalWidth={item.image.width}
+            originalHeight={item.image.height}
+
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <View style={styles.row}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
+              {`Place`}
+            </Text>
+            <Text style={{ fontSize: 16 }}>
+              {`${plase}`}
+            </Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
+              {`Date Booking`}
+            </Text>
+            <Text style={{ fontSize: 16 }}>
+              {`${dateBooking}`}
+            </Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
+              {`Start`}
+            </Text>
+            <Text style={{ fontSize: 16 }}>
+              {`${start}`}
+            </Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
+              {`End`}
+            </Text>
+            <Text style={{ fontSize: 16 }}>
+              {`${end}`}
+            </Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
+              {`Time Start`}
+            </Text>
+            <Text style={{ fontSize: 16 }}>
+              {`${timeStart}`}
+            </Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
+              {`TimeEnd`}
+            </Text>
+            <Text style={{ fontSize: 16 }}>
+              {`${timeEnd}`}
+            </Text>
+          </View>
+        </View>
+
       </View>
     );
   };
@@ -102,20 +173,22 @@ export default class App extends Component {
   generateDateItems = () => {
     let items = {};
 
-    this.state.data.forEach((trip) => {
-      let trips = [trip];
+    this.state.dataevents.events.forEach((event) => {
+      let events = [event];
 
-      trips.forEach((tripItem) => {
-        if (!items[tripItem.dateString]) {
-          items[tripItem.dateString] = [{
-            ...tripItem
+      events.forEach((eventItem) => {
+        let correctDate = this.parseData(eventItem.start_date);
+
+        if (!items[correctDate]) {
+          items[correctDate] = [{
+            ...eventItem
           }];
         } else {
-          items[tripItem.dateString].push({
-            ...tripItem
+          items[correctDate].push({
+            ...eventItem
           });
-          items[tripItem.dateString].sort((trip1, trip2) => {
-            return moment(`${trip1.dateString} ${trip1.time}`).valueOf() - moment(`${trip2.dateString} ${trip2.time}`).valueOf();
+          items[correctDate].sort((event1, event2) => {
+            return moment(`${event1.dateString} ${event1.time}`).valueOf() - moment(`${event2.dateString} ${event2.time}`).valueOf();
           });
         }
       });
@@ -133,23 +206,28 @@ export default class App extends Component {
   render() {
     return (
       <View style={styles.container}>
-        <Agenda
-          items={this.state.items}
-          loadItemsForMonth={this.loadItems}
-          renderItem={this.renderItem}
-          renderEmptyDate={this.renderEmptyDate}
-          rowHasChanged={this.rowHasChanged}
-          theme={{
-            dotColor: '#1EE188',
-            selectedDayBackgroundColor: '#1EE188',
-            agendaDayTextColor: '#333',
-            agendaDayNumColor: '#333',
-            agendaTodayColor: '#1EE188',
-            agendaKnobColor: '#1EE188',
-            todayTextColor: '#1EE188',
-            backgroundColor: '#ddd',
-          }}
-        />
+        {!this.state.loading ?
+
+          <Agenda
+            items={this.state.items}
+            loadItemsForMonth={this.loadItems}
+            renderItem={this.renderItem}
+            renderEmptyDate={this.renderEmptyDate}
+            rowHasChanged={this.rowHasChanged}
+            theme={{
+              dotColor: '#1EE188',
+              selectedDayBackgroundColor: '#1EE188',
+              agendaDayTextColor: '#333',
+              agendaDayNumColor: '#333',
+              agendaTodayColor: '#1EE188',
+              agendaKnobColor: '#1EE188',
+              todayTextColor: '#1EE188',
+              backgroundColor: '#ddd',
+            }}
+          />
+          :
+          <ActivityIndicator style={styles.indicator} size="large" color="#1EE188" />
+        }
       </View>
     );
   }
@@ -158,25 +236,36 @@ export default class App extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f6f6f6'
+    backgroundColor: '#f6f6f6',
+    marginTop: Platform.OS === 'ios' ? 22 : 0,
+  },
+  indicator: {
+    flex: 1
   },
   item: {
     backgroundColor: 'white',
     flex: 1,
-    padding: 10,
+    padding: 15,
     marginRight: 10,
     marginTop: 17,
     borderRadius: 5,
+    alignItems: 'stretch'
   },
   emptyDate: {
     height: 15,
     flex: 1,
     paddingTop: 30
   },
-  tripTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: 'black'
-  }
+  image: {
+    flex: 1,
+    borderRadius: 5,
+    overflow: 'hidden'
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8
+  },
 });
 

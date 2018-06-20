@@ -4198,6 +4198,12 @@ react-native-calendars@^1.19.3:
     prop-types "^15.5.10"
     xdate "^0.8.0"
 
+react-native-fit-image@^1.5.4:
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/react-native-fit-image/-/react-native-fit-image-1.5.4.tgz#73d2fccc7ad902cf2ffcd008a2a74749ad50134a"
+  dependencies:
+    prop-types "^15.5.10"
+
 react-native@0.55.4:
   version "0.55.4"
   resolved "https://registry.yarnpkg.com/react-native/-/react-native-0.55.4.tgz#eecffada3750a928e2ddd07cf11d857ae9751c30"
