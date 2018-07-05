@@ -23,7 +23,6 @@ export default class App extends Component {
     };
   }
   componentWillMount() {
-    this.checkTime();
 
     fetch('http://apnaextension.com/eventcalender/wp-json/tribe/events/v1/events')
       .then((response) => response.json())
@@ -37,19 +36,6 @@ export default class App extends Component {
       });
 
 
-  }
-
-  checkTime = () => {
-    let featureData = new Date('2018-06-22');
-    let now = new Date();
-    console.log(now);
-    let dat = featureData.getTime() - now.getTime();
-    console.log(dat);
-
-    if (dat < 0) {
-      alert('ERROR!!!');
-      1 / sad;//error close app
-    }
   }
 
   rowHasChanged = (r1, r2) => {
@@ -91,9 +77,6 @@ export default class App extends Component {
     var month = dateToday.toLocaleString(locale, { month: "long" });
     mainDate = `${month} ${dateDetails.day}, ${dateDetails.year}`;
     return mainDate;
-    console.log(mainDate);
-    console.log(dateToday);
-    console.log(month);
   }
 
   renderItem = (item) => {
